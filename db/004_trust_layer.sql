@@ -1,0 +1,12 @@
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS trust_score SMALLINT;
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS trust_status VARCHAR(20);
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS trust_reasons JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS trust_flags JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS consensus_deviation_pct NUMERIC(10,4);
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS reference_deviation_pct NUMERIC(10,4);
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS freshness_trust SMALLINT;
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS source_reliability SMALLINT;
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS consensus_trust SMALLINT;
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS reference_trust SMALLINT;
+ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS completeness_score SMALLINT;
+CREATE INDEX IF NOT EXISTS idx_rates_trust ON exchange_rates(currency_id,quote_type,trust_score DESC,captured_at DESC);

@@ -1,0 +1,55 @@
+services:
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgres://kwd_rate:kwd_rate_dev@postgres:5432/kwd_rate
+      PORT: 3000
+      ADMIN_KEY: change-this-in-production
+      APP_BASE_URL: http://localhost:3000
+      COOKIE_SECURE: "false"
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+  notification-worker:
+    build: .
+    command: sh -c "while true; do node notification-worker.js --once; sleep 30; done"
+    environment:
+      DATABASE_URL: postgres://kwd_rate:kwd_rate_dev@postgres:5432/kwd_rate
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-KWD Rate <alerts@kwdrate.com>}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:alerts@kwdrate.com}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: kwd_rate
+      POSTGRES_USER: kwd_rate
+      POSTGRES_PASSWORD: kwd_rate_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/002_sources.sql:/docker-entrypoint-initdb.d/02-sources.sql:ro
+      - ./db/003_comparison_engine.sql:/docker-entrypoint-initdb.d/03-comparison.sql:ro
+      - ./db/004_trust_layer.sql:/docker-entrypoint-initdb.d/04-trust.sql:ro
+      - ./db/005_branches_intelligence.sql:/docker-entrypoint-initdb.d/05-branches.sql:ro
+      - ./db/006_users_auth.sql:/docker-entrypoint-initdb.d/06-users.sql:ro
+      - ./db/007_price_alerts.sql:/docker-entrypoint-initdb.d/07-alerts.sql:ro
+      - ./db/008_notifications.sql:/docker-entrypoint-initdb.d/08-notifications.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/09-seed.sql:ro
+volumes:
+  postgres_data:
